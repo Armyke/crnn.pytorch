@@ -22,7 +22,7 @@ class BidirectionalLSTM(nn.Module):
 
 class CRNN(nn.Module):
 
-    def __init__(self, imgH, nc, nclass, nh, n_rnn=2, leakyRelu=False):
+    def __init__(self, imgH, nc, nclass, nh, n_rnn=2, leakyRelu=False, drop_out=0.0):
         super(CRNN, self).__init__()
         assert imgH % 16 == 0, 'imgH has to be a multiple of 16'
 
@@ -38,6 +38,8 @@ class CRNN(nn.Module):
             nOut = nm[i]
             cnn.add_module('conv{0}'.format(i),
                            nn.Conv2d(nIn, nOut, ks[i], ss[i], ps[i]))
+            cnn.add_module('dropout{0}'.format(i), nn.Dropout(p=drop_out))
+
             if batchNormalization:
                 cnn.add_module('batchnorm{0}'.format(i), nn.BatchNorm2d(nOut))
             if leakyRelu:

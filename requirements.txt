@@ -1,0 +1,7 @@
+torch
+torchvision
+tensorflow==1.14.0
+PyYAML
+lmdb
+tqdm
+opencv-python

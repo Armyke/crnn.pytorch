@@ -163,11 +163,11 @@ def main(opt, dummy_input_tensors_list):
 
             step = epoch * len(train_loader) + i
 
-            batch_loss = train_batch(inputs, crnn, loss_fn,
-                                     train_iter, optimizer, converter,
-                                     tb_writer=logs_writer,
-                                     step=step,
-                                     scheduler=scheduler)
+            batch_loss, batch_acc = train_batch(inputs, crnn, loss_fn,
+                                                train_iter, optimizer, converter,
+                                                tb_writer=logs_writer,
+                                                step=step,
+                                                scheduler=scheduler)
 
             loss_avg.add(batch_loss)
             i += 1
@@ -195,8 +195,8 @@ def main(opt, dummy_input_tensors_list):
                     crnn.state_dict(), ckpt_path)
 
             if i % opt.displayInterval == 0:
-                print('[%d/%d][%d/%d] Loss: %f' %
-                      (epoch, opt.nepoch, i, len(train_loader), loss_avg.val()))
+                print('[%d/%d][%d/%d] Loss: %f\tAcc: %f' %
+                      (epoch, opt.nepoch, i, len(train_loader), loss_avg.val(), batch_acc))
                 loss_avg.reset()
 
                 # do checkpointing

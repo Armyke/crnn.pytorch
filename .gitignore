@@ -1,7 +1,10 @@
+venv/
+data/
+train_set/
 .DS_Store
+.idea
 *.pth
 *.pyc
 *.pyo
 *.log
 *.tmp
-

@@ -18,7 +18,7 @@ def train_batch(inputs, net, loss_fn, dataloader, optimizer, converter,
     :param scheduler: Eventual Learning rate scheduler
     :param step: Counter for TB logging
 
-    :return: value of the loss calculated over the batch
+    :return: value of loss and accuracy calculated over the batch
     """
 
     if tb_writer and step is None:
@@ -41,6 +41,21 @@ def train_batch(inputs, net, loss_fn, dataloader, optimizer, converter,
     net.zero_grad()
     loss.backward()
     optimizer.step()
+
+    _, preds = preds.max(2)
+
+    if len(preds.shape) == 3:
+        preds = preds.squeeze(2)
+
+    n_correct = 0
+    preds = preds.transpose(1, 0).contiguous().view(-1)
+    sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
+    for pred, target in zip(sim_preds, cpu_texts):
+        if pred == target.lower():
+            n_correct += 1
+
+    accuracy = n_correct / float(batch_size)
+
     if scheduler:
         scheduler.step()
 
@@ -53,25 +68,11 @@ def train_batch(inputs, net, loss_fn, dataloader, optimizer, converter,
             tb_writer.add_scalar('learning rate',
                                  scheduler.get_lr()[-1],
                                  step)
+            tb_writer.add_scalar('training accuracy',
+                                 accuracy,
+                                 step)
 
-        _, preds = preds.max(2)
-
-        if len(preds.shape) == 3:
-            preds = preds.squeeze(2)
-
-        n_correct = 0
-        preds = preds.transpose(1, 0).contiguous().view(-1)
-        sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
-        for pred, target in zip(sim_preds, cpu_texts):
-            if pred == target.lower():
-                n_correct += 1
-
-        accuracy = n_correct / float(batch_size)
-        tb_writer.add_scalar('training accuracy',
-                             accuracy,
-                             step)
-
-    return loss
+    return loss, accuracy
 
 
 def validate_model(opt, inputs, net, dataset, loss_fn, converter,

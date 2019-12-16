@@ -1,5 +1,6 @@
 import torch
 from torch.autograd import Variable
+from tqdm import tqdm
 
 import utils
 
@@ -108,7 +109,7 @@ def validate_model(opt, inputs, net, dataset, loss_fn, converter,
     loss_avg = utils.averager()
 
     max_iter = min(max_iter, len(data_loader))
-    for i in range(max_iter):
+    for i in tqdm(range(max_iter)):
         data = val_iter.next()
         cpu_images, cpu_texts = data
         batch_size = cpu_images.size(0)

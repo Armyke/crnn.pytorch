@@ -63,8 +63,6 @@ def adjust_learning_rate(optimizer, new_lr):
     :param new_lr: scalar value
     """
     for param_group in optimizer.param_groups:
-        param_group['lr'] = new_lr
-    for param_group in optimizer.param_groups:
         param_group['initial_lr'] = new_lr
 
 

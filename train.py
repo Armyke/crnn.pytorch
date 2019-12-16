@@ -12,6 +12,8 @@ import torch.utils.data
 from torch.autograd import Variable
 from torch.utils.tensorboard import SummaryWriter
 
+from tqdm import tqdm
+
 import numpy as np
 
 from warpctc_pytorch import CTCLoss
@@ -155,6 +157,9 @@ def main(opt, dummy_input_tensors_list):
 
     for epoch in range(opt.nepoch):
         train_iter = iter(train_loader)
+
+        p_bar = tqdm(total=len(train_loader), desc='Epoch {}'.format(epoch + 1))
+
         i = 0
         while i < len(train_loader):
             for p in crnn.parameters():
@@ -170,6 +175,8 @@ def main(opt, dummy_input_tensors_list):
                                                 scheduler=scheduler)
 
             loss_avg.add(batch_loss)
+
+            p_bar.update(1)
             i += 1
 
             if i % opt.valInterval == 0:
@@ -207,7 +214,7 @@ def main(opt, dummy_input_tensors_list):
 
         if opt.decay > 1:
             # update optimizer learning rate
-            new_lr = opt.lr / opt.decay
+            new_lr = optimizer.param_groups[0]['initial_lr'] / opt.decay
             adjust_learning_rate(optimizer, new_lr)
 
             if scheduler:

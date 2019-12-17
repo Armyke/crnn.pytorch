@@ -12,9 +12,11 @@ import torch.utils.data
 from torch.autograd import Variable
 from torch.utils.tensorboard import SummaryWriter
 
+from torch.nn import CTCLoss
+
 import numpy as np
 
-from warpctc_pytorch import CTCLoss
+# from warpctc_pytorch import CTCLoss
 
 import utils
 import dataset

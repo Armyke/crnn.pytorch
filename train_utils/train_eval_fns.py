@@ -106,10 +106,11 @@ def validate_model(opt, inputs, net, dataset, loss_fn, converter,
     val_iter = iter(data_loader)
 
     n_correct = 0
+    count = 0
     loss_avg = utils.averager()
 
     max_iter = min(max_iter, len(data_loader))
-    for i in tqdm(range(max_iter)):
+    for i in range(max_iter):
         data = val_iter.next()
         cpu_images, cpu_texts = data
         batch_size = cpu_images.size(0)
@@ -131,6 +132,7 @@ def validate_model(opt, inputs, net, dataset, loss_fn, converter,
         preds = preds.transpose(1, 0).contiguous().view(-1)
         sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
         for pred, target in zip(sim_preds, cpu_texts):
+            count += 1
             if pred == target.lower():
                 n_correct += 1
 
@@ -139,7 +141,7 @@ def validate_model(opt, inputs, net, dataset, loss_fn, converter,
     for raw_pred, pred, gt in zip(raw_preds, sim_preds, cpu_texts):
         print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
-    accuracy = n_correct / float(max_iter * opt.batchSize)
+    accuracy = n_correct / float(count)
     print('Test loss: %f, accuracy: %f' % (loss_avg.val(), accuracy))
 
     if tb_writer:

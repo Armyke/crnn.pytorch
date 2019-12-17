@@ -5,13 +5,13 @@ import dataset
 import utils
 
 
-alphabet = 'abcdefghijklmnopqrstuvwxyz'
+alphabet = 'abcdefghijklmnopqrstuvwxyz01'
 
 
 def predict_image(image, model):
 
     converter = utils.strLabelConverter(alphabet)
-    transformer = dataset.resizeNormalize((100, 32))
+    transformer = dataset.resizeNormalize((224, 32))
 
     image = transformer(image)
 

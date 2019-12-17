@@ -18,12 +18,14 @@ def test_on_list(path_list, model_path):
 
     for path in path_list:
 
-        json_path = path.replace(path[-4:], "__metadata.json")
+        # json_path = path.replace(path[-4:], "__metadata.json")
+        #
+        # with open(json_path, 'r') as j:
+        #     info_dict = json.load(j)
+        #
+        # label = info_dict['text']
 
-        with open(json_path, 'r') as j:
-            info_dict = json.load(j)
-
-        label = info_dict['text']
+        label = path.split(os.sep)[-1].split('_')[0].replace('-', '1')
 
         # run model on each image
         image = Image.open(path).convert('L')

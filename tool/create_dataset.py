@@ -101,7 +101,7 @@ if __name__ == '__main__':
         os.mkdir(train_dir)
         os.mkdir(eval_dir)
 
-    alphabet = "abcdefghijklmnopqrstuvwxyz01"
+    alphabet = "abcdefghijklmnopqrstuvwxyz0"
 
     tmp_image_path_list = glob(os.path.join(images_dir_path, '*', '*', '*.png'))
     tmp_image_path_list += glob(os.path.join(images_dir_path, '*', '*', '*.jpg'))
@@ -130,7 +130,7 @@ if __name__ == '__main__':
             label = img_name.split('_')[0]
 
             if '-' in label:
-                label = label.replace('-', '1')
+                label = label.replace('-', '')
 
             tmp_labels_list.append(label)
 

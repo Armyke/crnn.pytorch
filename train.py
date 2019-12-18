@@ -12,11 +12,11 @@ import torch.utils.data
 from torch.autograd import Variable
 from torch.utils.tensorboard import SummaryWriter
 
-from torch.nn import CTCLoss
+# from torch.nn import CTCLoss
 
 import numpy as np
 
-# from warpctc_pytorch import CTCLoss
+from warpctc_pytorch import CTCLoss
 
 import utils
 import dataset
@@ -80,7 +80,7 @@ def main(opt, dummy_input_tensors_list):
                                                                                imgW=opt.imgW,
                                                                                keep_ratio=opt.keep_ratio))
     test_dataset = dataset.lmdbDataset(root=opt.valRoot,
-                                       transform=dataset.resizeNormalize((100, 32)))
+                                       transform=dataset.resizeNormalize((opt.imgW, opt.imgH)))
 
     nclass = len(opt.alphabet) + 1
     nc = 1

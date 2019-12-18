@@ -38,7 +38,7 @@ def train_batch(inputs, net, loss_fn, dataloader, optimizer, converter,
 
     preds = net(image)
     preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-    loss = loss_fn(preds, text, preds_size, length)
+    loss = loss_fn(preds, text, preds_size, length) / batch_size
     net.zero_grad()
     loss.backward()
     optimizer.step()
@@ -121,7 +121,7 @@ def validate_model(opt, inputs, net, dataset, loss_fn, converter,
 
         preds = net(image)
         preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-        cost = loss_fn(preds, text, preds_size, length)
+        cost = loss_fn(preds, text, preds_size, length) / batch_size
         loss_avg.add(cost)
 
         _, preds = preds.max(2)

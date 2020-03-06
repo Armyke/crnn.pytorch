@@ -82,6 +82,13 @@ if __name__ == '__main__':
                         required=True)
     PARSER.add_argument('--from_json', default=True,
                         help='Whether to extract labels from json files or not')
+    PARSER.add_argument('--split', default=0.8, type=float,
+                        help='Train split percentage')
+    PARSER.add_argument('--alphabet', default="abcdefghijklmnopqrstuvwxyz",
+                        type=str,
+                        help='Alphabet as string. Default value is:'
+                             '- "abcdefghijklmnopqrstuvwxyz"')
+
     ARGS = PARSER.parse_args()
 
     if ARGS.from_json not in ('True', 'False'):
@@ -100,8 +107,6 @@ if __name__ == '__main__':
     elif not os.path.exists(train_dir) or not os.path.exists(eval_dir):
         os.mkdir(train_dir)
         os.mkdir(eval_dir)
-
-    alphabet = "abcdefghijklmnopqrstuvwxyz0"
 
     tmp_image_path_list = glob(os.path.join(images_dir_path, '*', '*', '*.png'))
     tmp_image_path_list += glob(os.path.join(images_dir_path, '*', '*', '*.jpg'))
@@ -131,6 +136,10 @@ if __name__ == '__main__':
 
             if '-' in label:
                 label = label.replace('-', '')
+            if '0' in label:
+                label = label.replace('0', '')
+            if '1' in label:
+                label = label.replace('0', '')
 
             tmp_labels_list.append(label)
 
@@ -143,7 +152,7 @@ if __name__ == '__main__':
         try:
             encoding_check = label.encode()
             for char in list(label.lower()):
-                if char not in alphabet:
+                if char not in ARGS.alphabet:
                     is_in_alph = False
 
             if is_in_alph:
@@ -154,10 +163,18 @@ if __name__ == '__main__':
 
     image_path_list, labels_list = zip(*tmp)
 
-    split_percentage = 0.8
-    len_train = int(len(image_path_list) * split_percentage)
+    split_percentage = ARGS.split
 
-    print("Labelling finished, starting LMDB dataset creation\n")
+    if split_percentage:
 
-    createDataset(train_dir, image_path_list[:len_train], labels_list[:len_train])
-    createDataset(eval_dir, image_path_list[len_train:], labels_list[len_train:])
+        len_train = int(len(image_path_list) * split_percentage)
+
+        print("Labelling finished, starting LMDB dataset creation\n")
+
+        createDataset(train_dir, image_path_list[:len_train], labels_list[:len_train])
+        createDataset(eval_dir, image_path_list[len_train:], labels_list[len_train:])
+
+    else:
+        print("Labelling finished, starting LMDB dataset creation\n")
+        print("--split was either 0 or None, creating a single lmdb file in train dir.")
+        createDataset(train_dir, image_path_list, labels_list)

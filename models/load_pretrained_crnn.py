@@ -3,12 +3,9 @@ import torch
 from models import crnn as crnn
 
 
-alphabet = 'abcdefghijklmnopqrstuvwxyz'
-
-
-def load_model(model_path):
+def load_model(model_path, nh, alphabet='abcdefghijklmnopqrstuvwxyz'):
     # initialize crnn model
-    model = crnn.CRNN(32, 1, len(alphabet) + 1, 256)
+    model = crnn.CRNN(32, 1, len(alphabet) + 1, nh)
 
     # load model
     try:

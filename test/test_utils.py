@@ -29,7 +29,7 @@ def equal(a, b):
 class utilsTestCase(unittest.TestCase):
 
     def checkConverter(self):
-        encoder = utils.strLabelConverter('abcdefghijklmnopqrstuvwxyz')
+        encoder = utils.StringLabelConverter('abcdefghijklmnopqrstuvwxyz')
 
         # Encode
         # trivial mode
@@ -70,18 +70,18 @@ class utilsTestCase(unittest.TestCase):
     def checkOneHot(self):
         v = torch.LongTensor([1, 2, 1, 2, 0])
         v_length = torch.LongTensor([2, 3])
-        v_onehot = utils.oneHot(v, v_length, 4)
+        v_onehot = utils.one_hot(v, v_length, 4)
         target = torch.FloatTensor([[[0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0]],
                                     [[0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0]]])
         assert target.equal(v_onehot)
 
     def checkAverager(self):
-        acc = utils.averager()
+        acc = utils.Averager()
         acc.add(Variable(torch.Tensor([1, 2])))
         acc.add(Variable(torch.Tensor([[5, 6]])))
         assert acc.val() == 3.5
 
-        acc = utils.averager()
+        acc = utils.Averager()
         acc.add(torch.Tensor([1, 2]))
         acc.add(torch.Tensor([[5, 6]]))
         assert acc.val() == 3.5
@@ -89,7 +89,7 @@ class utilsTestCase(unittest.TestCase):
     def checkAssureRatio(self):
         img = torch.Tensor([[1], [3]]).view(1, 1, 2, 1)
         img = Variable(img)
-        img = utils.assureRatio(img)
+        img = utils.assure_ratio(img)
         assert torch.Size([1, 1, 2, 2]) == img.size()
 
 

@@ -7,7 +7,7 @@ from torch.autograd import Variable
 import collections
 
 
-class strLabelConverter(object):
+class StringLabelConverter(object):
     """Convert between str and label.
 
     NOTE:
@@ -49,7 +49,8 @@ class strLabelConverter(object):
             length = [len(s) for s in text]
             text = ''.join(text)
             text, _ = self.encode(text)
-        return (torch.IntTensor(text), torch.IntTensor(length))
+
+        return torch.IntTensor(text), torch.IntTensor(length)
 
     def decode(self, t, length, raw=False):
         """Decode encoded texts back into strs.
@@ -89,7 +90,7 @@ class strLabelConverter(object):
             return texts
 
 
-class averager(object):
+class Averager(object):
     """Compute average for `torch.Variable` and `torch.Tensor`. """
 
     def __init__(self):
@@ -106,9 +107,10 @@ class averager(object):
         self.n_count += count
         self.sum += v
 
-    def reset(self):
-        self.n_count = 0
-        self.sum = 0
+    @classmethod
+    def reset(cls):
+        cls.n_count = 0
+        cls.sum = 0
 
     def val(self):
         res = 0
@@ -117,7 +119,7 @@ class averager(object):
         return res
 
 
-def oneHot(v, v_length, nc):
+def one_hot(v, v_length, nc):
     batchSize = v_length.size(0)
     maxLength = v_length.max()
     v_onehot = torch.FloatTensor(batchSize, maxLength, nc).fill_(0)
@@ -130,17 +132,17 @@ def oneHot(v, v_length, nc):
     return v_onehot
 
 
-def loadData(v, data):
+def load_data(v, data):
     v.resize_(data.size()).copy_(data)  # v.data{etc}
 
 
-def prettyPrint(v):
+def pretty_print(v):
     print('Size {0}, Type: {1}'.format(str(v.size()), v.data.type()))
     print('| Max: %f | Min: %f | Mean: %f' % (v.max().data[0], v.min().data[0],
                                               v.mean().data[0]))
 
 
-def assureRatio(img):
+def assure_ratio(img):
     """Ensure imgH <= imgW."""
     b, c, h, w = img.size()
     if h > w:

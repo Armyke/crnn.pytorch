@@ -17,7 +17,7 @@ if torch.cuda.is_available():
 print('loading pretrained model from %s' % model_path)
 model.load_state_dict(torch.load(model_path))
 
-converter = utils.strLabelConverter(alphabet)
+converter = utils.StringLabelConverter(alphabet)
 
 transformer = dataset.resizeNormalize((100, 32))
 image = Image.open(img_path).convert('L')

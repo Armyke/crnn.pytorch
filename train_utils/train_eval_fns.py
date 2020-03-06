@@ -1,8 +1,12 @@
 import torch
 from torch.autograd import Variable
-from tqdm import tqdm
+
+from cv2 import putText, FONT_ITALIC, LINE_AA
+from torch import Tensor, cat
 
 import utils
+
+from dataset import alignCollate
 
 
 def train_batch(inputs, net, loss_fn, dataloader, optimizer, converter,
@@ -31,10 +35,10 @@ def train_batch(inputs, net, loss_fn, dataloader, optimizer, converter,
     data = dataloader.next()
     cpu_images, cpu_texts = data
     batch_size = cpu_images.size(0)
-    utils.loadData(image, cpu_images)
+    utils.load_data(image, cpu_images)
     t, l = converter.encode(cpu_texts)
-    utils.loadData(text, t)
-    utils.loadData(length, l)
+    utils.load_data(text, t)
+    utils.load_data(length, l)
 
     preds = net(image)
     preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
@@ -61,16 +65,30 @@ def train_batch(inputs, net, loss_fn, dataloader, optimizer, converter,
         scheduler.step()
 
     if tb_writer:
-        tb_writer.add_scalar('training loss',
-                             loss.data.item(),
+        tb_writer.add_scalar('loss/train_loss', loss.data.item(),
                              step)
+        tb_writer.add_scalar('metrics/train_acc', accuracy,
+                             step)
+
+        sample = ((cpu_images[0] + 1) / 2 * 255).detach().numpy().astype('uint8')[0]
+
+        drawn_sample = putText(sample,
+                               sim_preds[0],
+                               (0, 10),
+                               FONT_ITALIC,
+                               0.5,
+                               (0, 255, 0),
+                               2,
+                               LINE_AA,
+                               bottomLeftOrigin=False)
+
+        tb_writer.add_images('training sample',
+                             drawn_sample,
+                             step, dataformats='HW')
 
         if scheduler:
             tb_writer.add_scalar('learning rate',
                                  scheduler.get_lr()[-1],
-                                 step)
-            tb_writer.add_scalar('training accuracy',
-                                 accuracy,
                                  step)
 
     return loss, accuracy
@@ -101,23 +119,27 @@ def validate_model(opt, inputs, net, dataset, loss_fn, converter,
         p.requires_grad = False
 
     net.eval()
-    data_loader = torch.utils.data.DataLoader(
-        dataset, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
+    data_loader = torch.utils.data.DataLoader(dataset, shuffle=True,
+                                              batch_size=opt.batchSize,
+                                              num_workers=int(opt.workers),
+                                              collate_fn=alignCollate(imgH=opt.imgH,
+                                                                      imgW=opt.imgW,
+                                                                      keep_ratio=opt.keep_ratio))
     val_iter = iter(data_loader)
 
     n_correct = 0
     count = 0
-    loss_avg = utils.averager()
+    loss_avg = utils.Averager()
 
     max_iter = min(max_iter, len(data_loader))
     for i in range(max_iter):
         data = val_iter.next()
         cpu_images, cpu_texts = data
         batch_size = cpu_images.size(0)
-        utils.loadData(image, cpu_images)
+        utils.load_data(image, cpu_images)
         t, l = converter.encode(cpu_texts)
-        utils.loadData(text, t)
-        utils.loadData(length, l)
+        utils.load_data(text, t)
+        utils.load_data(length, l)
 
         preds = net(image)
         preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
@@ -138,18 +160,41 @@ def validate_model(opt, inputs, net, dataset, loss_fn, converter,
 
     # TODO fix bug when batch size is 1
     raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:opt.n_test_disp]
-    for raw_pred, pred, gt in zip(raw_preds, sim_preds, cpu_texts):
+
+    to_log_samples = []
+
+    for idx, (raw_pred, pred, gt) in enumerate(zip(raw_preds, sim_preds, cpu_texts)):
+
         print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
+
+        if tb_writer:
+
+            sample = ((cpu_images[idx] + 1) / 2 * 255).detach().numpy().astype('uint8')[0]
+
+            drawn_sample = putText(sample,
+                                   pred,
+                                   (0, 10),
+                                   FONT_ITALIC,
+                                   0.5,
+                                   (0, 255, 0),
+                                   2,
+                                   LINE_AA,
+                                   bottomLeftOrigin=False)
+
+            to_log_samples.append(Tensor(drawn_sample).unsqueeze(0))
+
+    tb_writer.add_images('validation samples',
+                         cat(to_log_samples, 1) / 255,
+                         step,
+                         dataformats='CHW')
 
     accuracy = n_correct / float(count)
     print('Test loss: %f, accuracy: %f' % (loss_avg.val(), accuracy))
 
     if tb_writer:
-        tb_writer.add_scalar('validation loss',
-                             loss_avg.val(),
+        tb_writer.add_scalar('loss/val_loss', loss_avg.val(),
                              step)
-        tb_writer.add_scalar('validation accuracy',
-                             accuracy,
+        tb_writer.add_scalar('metrics/val_acc', accuracy,
                              step)
 
     return loss_avg.val(), accuracy

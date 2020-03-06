@@ -25,7 +25,7 @@ def test_on_list(path_list, model_path):
         #
         # label = info_dict['text']
 
-        label = path.split(os.sep)[-1].split('_')[0].replace('-', '1')
+        label = path.split(os.sep)[-1].split('_')[0].replace('-', '').replace('0', '')
 
         # run model on each image
         image = Image.open(path).convert('L')
@@ -44,14 +44,15 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--test_images_dir', required=True)
     parser.add_argument('--model_path', default='./demo.pth')
-    parser.add_argument('--compare_models', default=-1, help='If enable expects in model_path a directry'
-                                                             'where multiple models are stored for compare.'
-                                                             'Print for each model his accuracy and'
-                                                             ' selects the higher one')
+    parser.add_argument('--compare_models', default=-1,
+                        help='If enable expects in model_path a directory'
+                             'where multiple models are stored for compare.'
+                             'Print for each model his accuracy and'
+                             ' selects the higher one')
     args = parser.parse_args()
 
-    images_path_list = glob(os.path.join(args.test_images_dir, '*png'))
-    images_path_list += glob(os.path.join(args.test_images_dir, '*G'))
+    images_path_list = glob(os.path.join(args.test_images_dir, '*', '*', '*png'))
+    images_path_list += glob(os.path.join(args.test_images_dir, '*', '*', '*jpg'))
 
     if args.compare_models == -1:
         pred_list = test_on_list(images_path_list, args.model_path)

@@ -79,15 +79,14 @@ def main(opt, dummy_input_tensors_list):
                                                collate_fn=dataset.alignCollate(imgH=opt.imgH,
                                                                                imgW=opt.imgW,
                                                                                keep_ratio=opt.keep_ratio))
-    test_dataset = dataset.lmdbDataset(root=opt.valRoot,
-                                       transform=dataset.resizeNormalize((opt.imgW, opt.imgH)))
+    test_dataset = dataset.lmdbDataset(root=opt.valRoot)
 
     nclass = len(opt.alphabet) + 1
     nc = 1
 
     case = False if opt.case else True
 
-    converter = utils.strLabelConverter(opt.alphabet, ignore_case=case)
+    converter = utils.StringLabelConverter(opt.alphabet, ignore_case=case)
     loss_fn = CTCLoss()
 
     crnn = CRNN(opt.imgH, nc, nclass, opt.nh, drop_out=opt.drop_out)
@@ -125,8 +124,9 @@ def main(opt, dummy_input_tensors_list):
 
     inputs = (img, txt, b_length)
 
-    # loss averager
-    loss_avg = utils.averager()
+    # loss and accuracy averager
+    loss_avg = utils.Averager()
+    acc_avg = utils.Averager()
 
     # setup optimizer
     if opt.adam:
@@ -173,6 +173,7 @@ def main(opt, dummy_input_tensors_list):
                                                 scheduler=scheduler)
 
             loss_avg.add(batch_loss)
+            acc_avg.add(torch.Tensor([batch_acc]))
 
             i += 1
 
@@ -200,14 +201,21 @@ def main(opt, dummy_input_tensors_list):
 
             if i % opt.displayInterval == 0:
                 print('[%d/%d][%d/%d] Loss: %f\tAcc: %f' %
-                      (epoch, opt.nepoch, i, len(train_loader), loss_avg.val(), batch_acc))
-                loss_avg.reset()
+                      (epoch, opt.nepoch, i, len(train_loader), loss_avg.val(), acc_avg.val()))
 
                 # do checkpointing
                 # if i % opt.saveInterval == 0:
                 #     torch.save(
                 #         crnn.state_dict(),
                 #         '{0}/netCRNN_{1}_{2}_{3}_{4}.pth'.format(opt.expr_dir, epoch, i, loss, acc))
+
+        logs_writer.add_scalar('loss/epoch_loss', loss_avg.val(),
+                               epoch)
+        logs_writer.add_scalar('metrics/epoch_acc', acc_avg.val(),
+                               epoch)
+
+        loss_avg.reset()
+        acc_avg.reset()
 
         if opt.decay > 1:
             # update optimizer learning rate

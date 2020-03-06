@@ -10,7 +10,7 @@ alphabet = 'abcdefghijklmnopqrstuvwxyz01'
 
 def predict_image(image, model):
 
-    converter = utils.strLabelConverter(alphabet)
+    converter = utils.StringLabelConverter(alphabet)
     transformer = dataset.resizeNormalize((224, 32))
 
     image = transformer(image)
